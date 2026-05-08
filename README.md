@@ -4,8 +4,6 @@ This repository manages a homelab stack across Proxmox, MikroTik, Kubernetes, an
 All solution are not production ready. Use at your own risk and adapt as needed for your environment.
 
 Main idea is to create in homelab, cloud like infrastructure, with a focus on Kubernetes and BGP networking, with limited resources.
-The reason is only to learn and experiment with these technologies, and to have fun doing it. 
-The stack is not meant to be a reference architecture or best practice guide, but rather a personal playground for learning and tinkering.
 
 
 ## Network arhitecture
