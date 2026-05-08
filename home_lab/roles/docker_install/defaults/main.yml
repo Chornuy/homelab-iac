@@ -1,0 +1,28 @@
+---
+# Variables for the docker_install role
+
+# --- Docker Configuration ---
+# The desired channel for Docker APT repository (e.g., 'stable', 'test')
+docker_channel: "stable"
+
+# The name of the user to add to the 'docker' group (defaults to the user running the playbook)
+docker_user: "{{ ansible_user | default(ansible_env.USER) }}"
+
+# --- Installation Parameters ---
+# Packages required for adding the repository and general use
+docker_required_packages:
+  - ca-certificates
+  - curl
+  - gnupg
+  - lsb-release
+
+# Packages to install from the Docker repository
+docker_packages_to_install:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  # The modern Docker Compose V2 is installed as a plugin to the Docker CLI
+  - docker-compose-plugin
+  - python3-packaging
+  - python3-docker
+#  - docker-py

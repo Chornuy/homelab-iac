@@ -1,0 +1,8 @@
+- name: Setup SSH keys on Odroids
+  hosts: all_odroids
+  tasks:
+    - name: Ensure the SSH key is present for the dietpi user
+      ansible.posix.authorized_key:
+        user: root
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"

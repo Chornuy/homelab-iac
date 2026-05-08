@@ -1,0 +1,41 @@
+version: "3.7"
+
+services:
+  prometheus:
+    platform: linux/arm/v7
+    image: prom/prometheus:{{ prometheus_version }}
+    container_name: prometheus
+    # Map Prometheus's web UI port
+    ports:
+      - "{{ prometheus_expose_port }}:9090"
+    volumes:
+      # Mount the Prometheus configuration file
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      # Persistent storage for metrics data (will use the fast eMMC storage)
+      - {{ prometheus_data_path }}:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      - --storage.tsdb.max-block-duration=2h
+      - --storage.tsdb.min-block-duration=2h
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    # Use the official prom/prometheus multi-arch image (runs fine on ARM64)
+
+  grafana:
+    platform: linux/arm/v7
+    image: grafana/grafana:{{ grafana_version }}
+    container_name: grafana
+    # Map Grafana's web UI port
+    ports:
+      - "{{ grafana_expose_port }}:3000"
+    volumes:
+      # Persistent storage for Grafana dashboards and configuration (will use the fast eMMC storage)
+      - {{ grafana_data_path }}:/var/lib/grafana
+    restart: unless-stopped
+    # Use the official grafana/grafana multi-arch image (runs fine on ARM64)
+

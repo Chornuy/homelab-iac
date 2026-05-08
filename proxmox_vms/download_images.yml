@@ -1,0 +1,5 @@
+---
+- name: Download images
+  hosts: proxmox-pve-node-1
+  roles:
+    - role: proxmox_images

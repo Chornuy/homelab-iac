@@ -1,0 +1,9 @@
+---
+vault:
+  proxmox_api:
+    # proxmox API token secret
+    token_secret: 3d9c5594-0e2b-4485-b61e-d36e5767f595
+
+  proxmox_template:
+    # cloud init password
+    cipassword: NO_SECRETS_IN_GIT_PLEASE

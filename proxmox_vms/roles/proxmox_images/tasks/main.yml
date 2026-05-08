@@ -1,0 +1,32 @@
+---
+- name: Ensure Proxmox image directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ proxmox_iso_path }}"
+    - "{{ proxmox_cloud_image_path }}"
+
+- name: Fetch Ubuntu Cloud Image checksums
+  uri:
+    url: "{{ ubuntu_cloud_checksum_url }}"
+    return_content: yes
+  register: checksum_file
+
+- name: Extract SHA256 hash for the cloud image
+  set_fact:
+    cloud_image_hash: "{{ checksum_file.content | regex_findall('([a-f0-9]{64})[ ]+\\*?noble-server-cloudimg-amd64.img') | first }}"
+
+- name: Download Ubuntu 24.04 Cloud Image
+  get_url:
+    url: "{{ ubuntu_cloud_url }}"
+    dest: "{{ proxmox_iso_path }}/{{ ubuntu_cloud_filename }}"
+    checksum: "sha256:{{ cloud_image_hash }}"
+    mode: '0644'
+
+- name: Download Ubuntu 24.04 Standard ISO
+  get_url:
+    url: "{{ ubuntu_iso_url }}"
+    dest: "{{ proxmox_iso_path }}/{{ ubuntu_iso_filename }}"
+    mode: '0644'

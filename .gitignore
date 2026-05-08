@@ -1,0 +1,35 @@
+# --- Terraform ---
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+# Keep the template, ignore the actual secrets
+!example.tfvars
+
+# --- Ansible ---
+*.retry
+inventory/hosts.ini
+# If you use ansible-vault, ignore the password file
+.vault_pass
+
+# --- Packer ---
+output-*/
+packer_cache/
+*.pkrvars.hcl
+!example.pkrvars.hcl
+# --- OS / IDE ---
+.DS_Store
+.idea/
+.vscode/
+node_modules/
+
+# --- Secrets ---
+*.pem
+*.key
+*.pub
+id_rsa
+secrets.yml
+kubeconfig_proxmox
+
+# --- Logs ---
+*.log

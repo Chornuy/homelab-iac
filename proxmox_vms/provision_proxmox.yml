@@ -1,0 +1,19 @@
+---
+- name: Create proxmox template
+  hosts: proxmox_nodes
+
+  tasks:
+    - name: Install qdevice
+      apt:
+        pkg:
+          - corosync-qdevice
+          - corosync-qnetd
+        state: latest
+        update_cache: true
+
+    - name: Install cloud-init
+      apt:
+        pkg:
+          - cloud-init
+        state: latest
+        update_cache: true

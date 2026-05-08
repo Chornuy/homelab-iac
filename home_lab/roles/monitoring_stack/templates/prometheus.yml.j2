@@ -1,0 +1,46 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  # Scrape Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+{% if cadvisor_targets is defined and cadvisor_targets | default([]) |length > 0 %}
+  # Scrape cAdvisor for container metrics (still using localhost:8080)
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: [{{ cadvisor_targets | join(' ,')  }}]
+    # Add a custom label for easy identification in Grafana
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: '([^:]+):9100'
+        target_label: instance
+        replacement: $1
+{% endif %}
+
+{% if node_exporter_hosts_targets is defined and node_exporter_hosts_targets | default([]) |length > 0 %}
+  # Dynamically Scrape all ODROID hosts via Node Exporter
+  - job_name: 'node_exporters'
+    static_configs:
+      - targets: [{{ node_exporter_hosts_targets | join(' ,')  }}]
+    # Add a custom label for easy identification in Grafana
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: '([^:]+):9100'
+        target_label: instance
+        replacement: $1
+{% endif %}
+
+{% if proxmox_pve_exporter is defined and proxmox_pve_exporter | default([]) |length > 0 %}
+- job_name: 'proxmox_pve_exporter'
+  static_configs:
+      - targets: [{{ proxmox_pve_exporter | join(' ,')  }}]
+    # Add a custom label for easy identification in Grafana
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: '([^:]+):9100'
+        target_label: instance
+        replacement: $1
+{% endif %}

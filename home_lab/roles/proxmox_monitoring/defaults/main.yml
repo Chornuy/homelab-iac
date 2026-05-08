@@ -1,0 +1,14 @@
+node_exporter_version: "1.7.0"  # Use a recent, stable version
+node_exporter_port: 9100
+node_exporter_archive: "node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+node_exporter_url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/{{ node_exporter_archive }}"
+node_exporter_path: "/usr/local/bin/node_exporter"
+# --- Proxmox PVE Exporter Settings (For PVE/VM/CT Metrics) ---
+pve_exporter_port: 9221
+# This package is available in the standard Proxmox repository
+pve_exporter_package: "proxmox-pve-exporter"
+
+# Note: Using 'bookworm' as the current base for Proxmox VE 8.x
+pve_repo_url: "http://download.proxmox.com/debian/pve"
+pve_repo_codename: "bookworm" # Change this if your PVE is older than v8 (e.g., bullseye)
+proxmox_key_path: "/etc/apt/keyrings/proxmox-release-{{ pve_repo_codename }}.gpg"

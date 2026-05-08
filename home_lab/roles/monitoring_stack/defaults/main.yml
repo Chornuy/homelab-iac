@@ -1,0 +1,15 @@
+---
+grafana_version: "5.1.4"
+grafana_data_path: ./
+grafana_expose_port: 3000
+
+prometheus_version: "2.7.1"
+prometheus_data_path: ./
+prometheus_expose_port: 9090
+
+node_exporter_hosts_targets:
+  - "localhost:9100"
+
+proxmox_pve_exporter: []
+
+cadvisor_targets: []

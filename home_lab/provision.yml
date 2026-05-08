@@ -1,0 +1,19 @@
+- hosts: all_odroids
+  become: yes
+  remote_user: root
+  gather_facts: no
+  pre_tasks:
+    - name: 'install python3.13'
+      shell: apt-get -y install python3.13
+    - name: 'install pip'
+      shell: apt-get -y install pip
+
+#  tasks:
+#    - name: Ensure SSH access is configured
+#      ansible.builtin.user:
+#        name: "{{ my_ssh_user }}"
+#        password: "{{ my_ssh_pass | password_hash('sha512') }}"
+#        state: present
+#  tasks:
+#    - name: 'ensure user {{ project_name }} exists'
+#      user: name={{ project_name }} state=present

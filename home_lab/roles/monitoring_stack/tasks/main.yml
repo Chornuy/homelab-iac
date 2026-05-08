@@ -1,0 +1,44 @@
+---
+- name: 1. Ensure monitoring deployment directory is present
+  ansible.builtin.file:
+    path: /opt/monitoring
+    state: directory
+    mode: '0755'
+
+- name: 2. Ensure persistent storage directories exist on the eMMC host
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    # Set generous permissions to ensure Docker container users can write data
+    mode: '0777'
+  loop:
+    - "{{ prometheus_data_path }}"
+    - "{{ grafana_data_path }}"
+
+- name: 2. Template the full prometheus.yml config file
+  ansible.builtin.template:
+    src: prometheus.yml.j2  # We'll create a template version of prometheus.yml
+    dest: /opt/monitoring/prometheus.yml
+    mode: '0644'
+  register: prometheus_config_status
+
+- name: 4. Template Docker Compose file with variable paths (Jinja2)
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: /opt/monitoring/docker-compose.yml
+    mode: '0644'
+    # Variables are automatically passed from the vars section above
+
+- name: 3. Restart Prometheus container if configuration changed
+  community.docker.docker_container:
+    name: prometheus
+    state: started
+    restart: yes
+  when: prometheus_config_status.changed
+
+- name: 6. Display Access URLs
+  ansible.builtin.debug:
+    msg:
+      - "Prometheus is available at: http://{{ ansible_default_ipv4.address }}:9090"
+      - "Grafana is available at: http://{{ ansible_default_ipv4.address }}:3000"
+      - "Grafana default login: admin / admin (you will be prompted to change password)"

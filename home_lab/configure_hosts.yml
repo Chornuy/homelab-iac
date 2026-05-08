@@ -1,0 +1,65 @@
+---
+- name: Configure /etc/hosts file for cluster resolution
+  hosts: all # Target group containing ALL machines that need to know each other's IPs
+  become: yes
+  gather_facts: yes # Necessary to retrieve the IP address of each host via hostvars
+
+  tasks:
+    - name: Dynamically generate cluster hosts file block
+      ansible.builtin.set_fact:
+        # Construct the block content using Jinja2.
+        # We must filter the hosts to ensure 'ansible_default_ipv4' is defined,
+        # otherwise the playbook fails if a host is unreachable during fact gathering.
+        host_entries: |
+          # --- Homelab Cluster Hostnames (Managed by Ansible) ---
+          {% for host in groups['all'] %}
+          {% if host != inventory_hostname %}
+          {% if hostvars[host].ansible_default_ipv4 is defined %}
+          {{ hostvars[host]['ansible_default_ipv4']['address'] }} {{ host }}
+          {% endif %}
+          {% endif %}
+          {% endfor %}
+          # --- END Homelab Cluster Hostnames ---
+
+    - name: Ensure dynamic host entries are present in /etc/hosts
+      ansible.builtin.blockinfile:
+        path: /etc/hosts
+        block: "{{ host_entries }}"
+        # The marker allows Ansible to safely find and update this block in the hosts file
+        marker: "# {mark} ANSIBLE MANAGED CLUSTER HOSTS BLOCK"
+        state: present
+        backup: yes # Always good practice to keep a backup of critical config files
+
+# --- NEW PLAY FOR LOCAL CONTROL MACHINE ---
+
+- name: 2. Configure /etc/hosts file on the LOCAL CONTROL MACHINE
+  hosts: localhost
+  connection: local # Run this play on the machine executing Ansible
+  remote_user: black # Set the user to the one running the playbook
+  # OR, use a hardcoded user like: remote_user: "ansible_admin"
+  become: yes # Needed to write to /etc/hosts
+  gather_facts: yes # Still needed to ensure hostvars are loaded for remote hosts
+  become_method: sudo # Explicitly use sudo for clarity
+
+  tasks:
+    - name: Dynamically generate cluster hosts file block (Including all members)
+      ansible.builtin.set_fact:
+        # Construct the block content using Jinja2.
+        # Since this runs on localhost, we include ALL hosts from the remote group.
+        host_entries_local: |
+          # --- Remote Cluster Hostnames (Managed by Ansible) ---
+          {% for host in groups['all'] %}
+          {% if hostvars[host].ansible_default_ipv4 is defined %}
+          {{ hostvars[host]['ansible_default_ipv4']['address'] }} {{ host }}
+          {% endif %}
+          {% endfor %}
+          # --- END Remote Cluster Hostnames ---
+
+    - name: Ensure dynamic host entries are present in LOCAL /etc/hosts
+      ansible.builtin.blockinfile:
+        path: /etc/hosts
+        block: "{{ host_entries_local }}"
+        # Use a distinct marker for the local machine's block
+        marker: "# {mark} ANSIBLE MANAGED REMOTE CLUSTER HOSTS BLOCK"
+        state: present
+        backup: yes

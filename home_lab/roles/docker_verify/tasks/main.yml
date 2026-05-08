@@ -1,0 +1,40 @@
+---
+# This file is the main task list for the 'docker_verify' role.
+# It tests Docker's ability to run a container, map a port, and serve network traffic.
+
+- name: Start simple HTTP server container on host port 8080
+  community.docker.docker_container:
+    name: test_http_server
+    image: python:3.10-slim # Using a multi-arch image that includes ARM support
+    state: started
+    command: python -m http.server 8080
+    ports:
+      - "8080:8080" # Map container port 8080 to host port 8080
+    auto_remove: false # Required for explicit cleanup later
+  register: container_start_result
+  tags: setup
+
+- name: Wait for the exposed port 8080 to become reachable/open
+  # Check local connectivity on the ODROID to ensure Docker's network bridge is functioning
+  ansible.builtin.wait_for:
+    host: "127.0.0.1"
+    port: 8080
+    timeout: 15
+    state: started
+  register: port_check_result
+  tags: verify
+
+- name: Assert Port 8080 is reachable on the target host
+  ansible.builtin.assert:
+    that:
+      - port_check_result.elapsed is defined
+      - port_check_result.elapsed < 15 # Ensure the connection was established within the timeout
+    success_msg: "SUCCESS: Docker port 8080 is reachable, confirming network forwarding works on {{ ansible_architecture }}."
+    fail_msg: "FAILURE: Port 8080 did not become reachable within the timeout. Docker network setup failed."
+  tags: verify
+
+- name: Stop and remove the test container
+  community.docker.docker_container:
+    name: test_http_server
+    state: absent
+  tags: cleanup

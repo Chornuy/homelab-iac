@@ -1,0 +1,13 @@
+---
+grafana_data_path: /mnt/emmc_storage/grafana
+prometheus_data_path: /mnt/emmc_storage/prometheus
+prometheus_version: v3.5.1
+grafana_version: 12.4.0-21693836646-ubuntu
+
+node_exporter_hosts_targets:
+  - "odroid-xu4-1:9100"
+  - "odroid-xu4-2:9100"
+  - "odroid-c2-1:9100"
+  - "odroid-c2-2:9100"
+  - "proxmox-pve-node-1:9100"
+  - "proxmox-pve-node-2:9100"

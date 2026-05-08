@@ -1,0 +1,64 @@
+---
+- name: Configure ODROID-C2 (First Node) as QDevice Host
+  # Targets the first host listed in the 'odroid_c2' group
+  hosts: "{{ groups['odroid_c2'][0] }}"
+  become: true # Required for installation
+
+  tasks:
+    - name: 1. Ensure corosync-qdevice package is installed on the ODROID
+      ansible.builtin.apt:
+        name: corosync-qnetd
+        state: present
+        update_cache: true
+      # This task installs the necessary service on the ODROID-C2.
+
+    - name: 2. Ensure corosync-qdevice service is running and enabled
+      ansible.builtin.systemd_service:
+        name: corosync-qnetd
+        state: started
+        enabled: true
+      # Starts the service immediately and ensures it persists across reboots.
+
+- name: Configure Proxmox Cluster to use the QDevice
+  # Targets only the first node in the Proxmox cluster to run the setup command once
+  hosts: "{{ groups['proxmox_nodes'][0] }}"
+  become: true
+
+  tasks:
+    - name: 3. Get IP and hostname of the QDevice host from inventory
+      # Dynamically pulls the IP address of the first host in the 'odroid_c2' group
+      ansible.builtin.set_fact:
+        qdevice_ip: "{{ hostvars[groups['odroid_c2'][0]]['ansible_host'] }}"
+        qdevice_name: "{{ groups['odroid_c2'][0] }}"
+      run_once: true
+
+    - name: 4. Check current Proxmox cluster status for QDevice
+      ansible.builtin.shell: "pvecm status | grep \"Quorum device enabled: Yes\" "
+      register: qdevice_status_check
+      ignore_errors: true
+      changed_when: false
+      run_once: true
+
+    - name: 5. Execute pvecm qdevice setup command
+      # This command adds the ODROID's IP as the QDevice vote.
+      # Requires passwordless SSH (recommended) or shared root password access between the PVE node and the ODROID.
+      ansible.builtin.command: "pvecm qdevice setup {{ qdevice_ip }}"
+      when: qdevice_status_check.rc != 0
+      run_once: true
+      # NOTE: The command output will prompt for the root password if keys are not set up.
+      # For true automation, ensure the Proxmox nodes have the ODROID's root SSH key installed.
+
+    - name: 6. Verify final cluster status
+      ansible.builtin.command: pvecm status
+      register: final_status
+      changed_when: false
+      run_once: true
+
+    - name: 7. Display Final Quorum Status
+      ansible.builtin.debug:
+        msg: |
+          QDevice Setup Complete. Check the 'Quorum' line below:
+          {{ final_status.stdout }}
+          
+          QDevice Host: {{ qdevice_name }} ({{ qdevice_ip }})
+      run_once: true

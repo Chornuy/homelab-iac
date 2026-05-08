@@ -1,0 +1,70 @@
+---
+- name: Setup NFS Server on Odroid XU4
+  hosts: odroid-xu4-1
+  become: true
+  vars:
+    # Change this to the path of your external HDD
+    export_path: "/mnt/media"
+    # Your local network subnet
+    allowed_subnet: "192.168.0.0/24"
+    storage_device: "/dev/sdb"
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install NFS Kernel Server
+      apt:
+        name: nfs-kernel-server
+        state: present
+
+    - name:  Create filesystem on device
+      community.general.filesystem:
+        fstype: ext4
+        dev: "{{ storage_device }}"
+        # Un-comment the line below if you are SURE the drive is empty/safe to wipe
+#        force: yes
+
+    - name: Get UUID of the storage device
+      command: blkid -s UUID -o value {{ storage_device }}
+      register: device_uuid
+      changed_when: false
+
+    - name: Ensure export directory exists
+      file:
+        path: "{{ export_path }}"
+        state: directory
+        mode: '0777'
+        owner: nobody
+        group: nogroup
+
+    - name: Configure NFS exports
+      lineinfile:
+        path: /etc/exports
+        # Configuration: rw (read-write), sync (confirm writes),
+        # no_subtree_check (faster), no_root_squash (allows client root to have root privs on files)
+        line: "{{ export_path }} {{ allowed_subnet }}(rw,sync,no_subtree_check,no_root_squash)"
+        regexp: "^{{ export_path }}"
+        state: present
+      notify: Restart NFS Server
+
+    - name: Ensure NFS services are enabled and started
+      service:
+        name: nfs-kernel-server
+        state: started
+        enabled: yes
+
+    - name: Open Firewall for NFS (if UFW is present)
+      shell: |
+        ufw allow from {{ allowed_subnet }} to any port nfs
+      register: ufw_check
+      failed_when: false
+      changed_when: "'Rules updated' in ufw_check.stdout"
+
+  handlers:
+    - name: Restart NFS Server
+      service:
+        name: nfs-kernel-server
+        state: restarted

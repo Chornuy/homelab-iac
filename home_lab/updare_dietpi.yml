@@ -1,0 +1,48 @@
+---
+- name: Update and Maintenance for DietPi Nodes
+  hosts: all_odroids
+  become: true
+  serial: 1  # Updates nodes one by one to keep services available
+
+  tasks:
+    # Ansible task to update DietPi non-interactively
+    - name: Run DietPi update script
+      ansible.builtin.command: dietpi-update 1
+      register: update_output
+      # Marks as changed only if the success message appears in output
+      changed_when: "'Update successfully applied' in update_output.stdout"
+      # Fails only on genuine errors, ignoring the 'already up to date' status
+      failed_when:
+        - update_output.rc != 0
+        - "'No update available' not in update_output.stdout"
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+
+    - name: Display update status
+      ansible.builtin.debug:
+        var: update_output.stdout_lines
+      when: update_output.changed
+
+    - name: Check if a reboot is required
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required
+
+    - name: Reboot the node if kernel was updated
+      reboot:
+        msg: "Rebooting to apply kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 30
+        test_command: uptime
+      when: reboot_required.stat.exists
+
+    - name: Display current DietPi version
+      command: cat /DietPi/dietpi/.version
+      register: dietpi_version
+      changed_when: false
+
+    - name: Print Version Status
+      debug:
+        msg: "Node {{ inventory_hostname }} is now up to date on DietPi version {{ dietpi_version.stdout }}"

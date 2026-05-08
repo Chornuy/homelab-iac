@@ -1,0 +1,23 @@
+---
+- name: 1. DEPLOY NODE EXPORTER CONTAINER ON ALL ODROIDS
+  hosts: all_odroids
+  become: yes
+  roles:
+    - node_exporter
+
+- name: Deploy Exporters on Proxmox Hypervisors
+  hosts: proxmox_nodes
+  become: yes
+  roles:
+    - role: proxmox_monitoring
+
+- name: Deploy Prometheus and Grafana Monitoring Stack
+  hosts: odroid-xu4-2 # Target the specific host with the upgraded memory/storage
+  become: yes
+  vars:
+    grafana_data_path: /mnt/emmc_storage/
+    prometheus_data_path: /mnt/emmc_storage/
+    node_exporter_targets:
+
+  roles:
+    - monitoring_stack

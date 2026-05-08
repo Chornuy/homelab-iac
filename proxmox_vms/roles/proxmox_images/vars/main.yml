@@ -1,0 +1,15 @@
+---
+# Proxmox Paths
+proxmox_iso_path: "/var/lib/vz/template/iso"
+proxmox_cloud_image_path: "/var/lib/vz/template/qcow2" # Custom path for Packer to find images
+
+# Ubuntu 24.04 ISO (Manual/Autoinstall)
+ubuntu_iso_url: "https://releases.ubuntu.com/24.04/ubuntu-24.04.3-live-server-amd64.iso"
+ubuntu_iso_filename: "ubuntu-24.04-live-server-amd64.iso"
+ubuntu_iso_checksum: "https://releases.ubuntu.com/24.04/SHA256SUMS"
+
+# Ubuntu 24.04 Cloud Image (For fast Packer builds)
+ubuntu_cloud_url: "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
+ubuntu_cloud_filename: "ubuntu-24.04-cloud-init.img"
+# Using the official SHA256SUMS link for dynamic verification
+ubuntu_cloud_checksum_url: "https://cloud-images.ubuntu.com/noble/current/SHA256SUMS"

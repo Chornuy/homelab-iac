@@ -1,0 +1,38 @@
+#cloud-config
+autoinstall:
+  version: 1
+  locale: en_US
+  keyboard:
+    layout: us
+  # Storage configuration - basic LVM setup
+  storage:
+    layout:
+      name: lvm
+  # Network configuration - DHCP on any ethernet interface
+  network:
+    version: 2
+    ethernets:
+      all-interfaces:
+        match:
+          name: e*
+        dhcp4: true
+  identity:
+    hostname: k8s-template
+    username: ubuntu
+    # Password is "ubuntu"
+    password: "$6$exDY1mhS4KUYCE/2$zmn9ToZwTKLhCw.b4/b.ZRTIZM30JZ4QrOQ2aOXJ8yk96xpcCof0kxKwuX1kqLG/ygbJ1f8wxED22bTL4F46P0"
+  ssh:
+    install-server: yes
+    allow-pw: yes
+  user-data:
+    disable_root: false
+  packages:
+    - qemu-guest-agent
+    - cloud-init
+    - sudo
+  late-commands:
+    # Ensure the 'ubuntu' user has passwordless sudo for Packer provisioners
+    - echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/ubuntu
+    - chmod 440 /target/etc/sudoers.d/ubuntu
+    # Ensure the SSH service starts on boot
+    - curtin in-target -- systemctl enable ssh
