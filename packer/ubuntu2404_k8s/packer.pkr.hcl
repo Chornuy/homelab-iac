@@ -89,6 +89,12 @@ source "proxmox-iso" "ubuntu" {
     "boot<enter>"
   ]
 
+  serials = ["socket"]
+  # Ensure your video driver is set to standard or compatible
+  vga {
+    type = "std"
+  }
+
   # Hardware Resources (Increased for K8s build overhead)
   cores           = "2"
   memory          = "4096"
@@ -153,7 +159,19 @@ build {
       "sudo truncate -s 0 /etc/machine-id",
       "sudo cloud-init clean",
       "sudo passwd -d ubuntu",
-      "echo 'Image build complete.'"
+      "echo 'Image build complete.'",
+      # 1. Update GRUB to redirect console output to both the screen and serial port 0 (115200 baud)
+      "sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=\".*\"/GRUB_CMDLINE_LINUX_DEFAULT=\"console=tty1 console=ttyS0,115200n8 quiet splash\"/' /etc/default/grub",
+
+      # 2. Tell GRUB to use the serial terminal command interface on boot
+      "echo 'GRUB_TERMINAL=\"console serial\"' | sudo tee -a /etc/default/grub",
+      "echo 'GRUB_SERIAL_COMMAND=\"serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1\"' | sudo tee -a /etc/default/grub",
+
+      # 3. Apply changes to the GRUB configuration file
+      "sudo update-grub",
+
+      # 4. Enable and start the serial terminal login daemon system hook
+      "sudo systemctl enable serial-getty@ttyS0.service"
     ]
   }
 }

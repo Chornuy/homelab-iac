@@ -1,6 +1,12 @@
 # 1. THE DATA STRUCTURE
 # This replaces master_count, worker_count, and various IP list variables.
 
+locals {
+  # Auto-calculate node parameters for Longhorn topology awareness
+  total_node_count            = length(var.cluster_nodes)
+  longhorn_replica_count      = local.total_node_count >= 3 ? 3 : local.total_node_count
+  longhorn_soft_anti_affinity = local.total_node_count < 3 ? "true" : "false"
+}
 
 resource "routeros_routing_bgp_connection" "k8s_peers" {
   for_each = { for k, v in var.cluster_nodes : k => v if v.type == "master" }
@@ -225,6 +231,10 @@ spec:
     - cidr: ${var.k8s_lb_cidr}
 EOF
       EOT
+      ,
+      # 5. Install Longhorn with Dynamic Replica Count and Anti-Affinity
+      # "helm install longhorn longhorn/longhorn --namespace longhorn-system --create-namespace --set defaultSettings.defaultDataPath='/var/lib/longhorn' --set defaultSettings.defaultReplicaCount=${local.longhorn_replica_count} --set defaultSettings.replicaSoftAntiAffinity=${local.longhorn_soft_anti_affinity}"
+    "helm install longhorn longhorn/longhorn --namespace longhorn-system --create-namespace --set defaultSettings.defaultDataPath='/var/lib/longhorn' --set defaultSettings.defaultReplicaCount=${local.longhorn_replica_count} --set defaultSettings.replicaSoftAntiAffinity=${local.longhorn_soft_anti_affinity} --set storageClass.numberOfReplicas=${local.longhorn_replica_count}"
     ]
   }
   depends_on = [proxmox_vm_qemu.k8s_node]
@@ -262,10 +272,18 @@ resource "terraform_data" "node_labels" {
 
   provisioner "remote-exec" {
     inline = [
-      # Wait for the node to appear in kubectl get nodes
-      "until kubectl get node ${each.key}; do sleep 5; done",
-      # Apply any custom labels from your variable map
-      # "kubectl label node ${each.key} ${join(" ", [for l in each.value.labels: "${l}=true" if l != ""])} --overwrite"
+      # 1. Wait until the target node registers with the api-server
+      "until kubectl get nodes -o jsonpath='{.items[*].metadata.name}' | grep -Fw '${lower(each.key)}'; do echo 'Waiting for node ${lower(each.key)} to register...'; sleep 5; done",
+
+      # 2. Pure Bash loop: safe, readable, and handles your [""] and ["worker"] maps perfectly
+      <<-EOT
+        for label in ${join(" ", compact(each.value.labels))}; do
+          if [ -n "$label" ]; then
+            echo "Applying label $label=true to node ${lower(each.key)}"
+            kubectl label node ${lower(each.key)} "$label=true" --overwrite
+          fi
+        done
+      EOT
     ]
   }
 
