@@ -81,15 +81,17 @@ rm cilium-linux-${CLI_ARCH}.tar.gz{,.sha256sum}
 echo ">>> Installing Longhorn CLI (lhctl)"
 # Determine architecture for lhctl
 LH_ARCH="amd64"
+LHS_VERSION="v1.11.2"
 if [ "$(uname -m)" = "aarch64" ]; then LH_ARCH="arm64"; fi
 
 # Fetch the latest release version if not hardcoded
 LH_RELEASE_TAG=$(curl -s https://api.github.com/repos/longhorn/cli/releases/latest | jq -r .tag_name)
 echo "Downloading Longhorn CLI version ${LH_RELEASE_TAG}..."
 
-curl -L "https://github.com/longhorn/cli/releases/download/${LH_RELEASE_TAG}/lhctl-linux-${LH_ARCH}" -o lhctl
-sudo chmod +x lhctl
-sudo mv lhctl /usr/local/bin/lhctl
+curl -L "https://github.com/longhorn/cli/releases/download/${LHS_VERSION}/longhornctl-linux-${LH_ARCH}" -o longhornctl
+sudo chmod +x longhornctl
+sudo mv longhornctl /usr/local/bin/longhornctl
+echo 'export KUBECONFIG=~/.kube/config' >> ~/.bashrc
 
 echo ">>> Preparing Longhorn installation via Helm"
 helm repo add longhorn https://charts.longhorn.io
@@ -106,19 +108,19 @@ echo "InitiatorName=${NEW_INITIATOR_NAME}" | sudo tee /etc/iscsi/initiatorname.i
 sudo systemctl restart iscsid
 
 # Identify the second disk (scsi1 is usually /dev/sdb or /dev/vdb)
-DATA_DISK="/dev/sdb"
+#DATA_DISK="/dev/sdb"
 
-echo ">>> Formatting Data Disk for Longhorn"
-sudo mkfs.xfs -f $DATA_DISK
-
-echo ">>> Creating Mount Point"
-sudo mkdir -p /var/lib/longhorn
-sudo mount $DATA_DISK /var/lib/longhorn
+#echo ">>> Formatting Data Disk for Longhorn"
+#sudo mkfs.xfs -f $DATA_DISK
+#
+#echo ">>> Creating Mount Point"
+#sudo mkdir -p /var/lib/longhorn
+#sudo mount $DATA_DISK /var/lib/longhorn
 
 # Make it permanent
-echo "$DATA_DISK /var/lib/longhorn xfs defaults 0 0" | sudo tee -a /etc/fstab
-
-sudo systemctl disable --now multipathd || true
+#echo "$DATA_DISK /var/lib/longhorn xfs defaults 0 0" | sudo tee -a /etc/fstab
+#
+#sudo systemctl disable --now multipathd || true
 
 echo ">>> NOTE: Longhorn cluster components require 'kubeadm init' to be finished first."
 echo ">>> After control plane is ready, run the following to install Longhorn:"

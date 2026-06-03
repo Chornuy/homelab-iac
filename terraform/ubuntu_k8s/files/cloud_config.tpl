@@ -21,7 +21,25 @@ write_files:
       #!/bin/bash
       echo "System is initializing for Kubernetes..."
 
+fs_setup:
+  - filesystem: xfs
+    device: /dev/sdb1
+    partition: auto
+
+disk_setup:
+  - /dev/sdb:
+      layout: [100]
+      overwrite: false
+
+mounts:
+  - [ /dev/sdb1, /var/lib/longhorn, xfs, "defaults,noatime", "0", "0" ]
+
 runcmd:
-  - echo "AAARGH - Cloud-init is running"
   - systemctl enable qemu-guest-agent
   - systemctl start qemu-guest-agent
+  # Mounting Longhorn volumes (if any)
+  - systemctl disable --now multipathd || true
+  - mkdir -p /mnt/longhorn-data
+  - mount -a
+  # Longhorn dependency checklist (crucial for Ubuntu templates)
+  - systemctl enable --now iscsid
