@@ -1,0 +1,65 @@
+# installation of Ubuntu 22.04/24.04 without manual intervention.
+
+autoinstall:
+  version: 1
+  locale: en_US
+  keyboard:
+    layout: us
+
+  # ---------------------------------------------------------------------------
+  # STORAGE CONFIGURATION
+  # ---------------------------------------------------------------------------
+  # Uses LVM (Logical Volume Management) for flexible disk management.
+  storage:
+    layout:
+      name: lvm
+
+  # ---------------------------------------------------------------------------
+  # NETWORK CONFIGURATION
+  # ---------------------------------------------------------------------------
+  # Matches any interface starting with 'en' or 'eth' and enables DHCP.
+  network:
+    version: 2
+    ethernets:
+      all-en:
+        dhcp4: true
+        match:
+          name: en*
+      all-eth:
+        dhcp4: true
+        match:
+          name: eth*
+
+  # ---------------------------------------------------------------------------
+  # USER IDENTITY
+  # ---------------------------------------------------------------------------
+  # Username: ubuntu
+  # Note: The password hash corresponds to the password 'ubuntu'
+  identity:
+    hostname: ubuntu
+    username: ubuntu
+    password: "$6$exDY1mhS4KUYCE/2$zmn9ToZwTKLhCw.b4/b.ZRTIZM30JZ4QrOQ2aOXJ8yk96xpcCof0kxKwuX1kqLG/ygbJ1f8wxED22bTL4F46P0"
+
+  # ---------------------------------------------------------------------------
+  # SSH AND PACKAGES
+  # ---------------------------------------------------------------------------
+  ssh:
+    install-server: yes
+    allow-pw: yes
+
+  user-data:
+    disable_root: false
+
+  packages:
+    - qemu-guest-agent # Required for Proxmox to see VM IP and status correctly
+
+  # ---------------------------------------------------------------------------
+  # LATE COMMANDS (POST-INSTALL)
+  # ---------------------------------------------------------------------------
+  # These commands run just before the installer reboots.
+  # We use '/target/' because the new OS is mounted there during installation.
+  late-commands:
+    # Allow the ubuntu user to use sudo without a password prompt (helps Packer provisioning)
+    - "echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/ubuntu"
+    # Ensure the qemu-guest-agent starts correctly on first boot
+    - "curtin in-target -- systemctl enable qemu-guest-agent"

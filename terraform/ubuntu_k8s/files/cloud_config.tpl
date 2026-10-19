@@ -10,7 +10,6 @@ ssh_authorized_keys:
 
 # Using the built-in packages module is safer than runcmd for basic installs
 packages:
-  - qemu-guest-agent
   - curl
   - apt-transport-https
 
