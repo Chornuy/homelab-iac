@@ -1,5 +1,6 @@
 - name: Setup SSH keys on Odroids
   hosts: all_odroids
+  remote_user: dietpi
   tasks:
     - name: Ensure the SSH key is present for the dietpi user
       ansible.posix.authorized_key:

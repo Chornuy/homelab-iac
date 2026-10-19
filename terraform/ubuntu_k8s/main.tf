@@ -1,5 +1,22 @@
 # 1. THE DATA STRUCTURE
 # This replaces master_count, worker_count, and various IP list variables.
+terraform {
+  backend "s3" {
+    bucket                      = "terraform-state"
+    key                         = "homelab/terraform.tfstate"
+    region                      = "us-east-1"
+    endpoints = {
+      s3 = "http://192.168.0.236:30293"
+    }
+    skip_credentials_validation = true
+    skip_metadata_api_check     = true
+    skip_region_validation      = true
+    # force_path_style            = true # Crucial for RustFS / MinIO
+    use_path_style              = true
+    skip_requesting_account_id  = true
+  }
+}
+
 
 locals {
   # Auto-calculate node parameters for Longhorn topology awareness
