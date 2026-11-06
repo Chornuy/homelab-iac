@@ -1,0 +1,20 @@
+# Copy to backend.hcl (gitignored) and fill in credentials.
+# Each stack MUST use its own unique key.
+bucket = "terraform-state"
+key    = "homelab/mongodb/terraform.tfstate"
+region = "us-east-1"
+
+endpoints = {
+  s3 = "http://192.168.0.236:30292"
+}
+
+access_key = "CHANGE_ME"
+secret_key = "CHANGE_ME"
+
+skip_credentials_validation = true
+skip_metadata_api_check     = true
+skip_region_validation      = true
+skip_requesting_account_id  = true
+use_path_style            = true
+insecure                    = true
+use_lockfile                = true

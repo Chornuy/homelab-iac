@@ -31,5 +31,13 @@ id_rsa
 secrets.yml
 kubeconfig_proxmox
 
+# --- Terraform backend ---
+backend.hcl
+
+# --- Generated cloud-init snippets (never commit rendered secrets) ---
+**/.generated/
+**/files/*-cloud_init.cfg
+**/files/*-user_data_cloud_init.cfg
+
 # --- Logs ---
 *.log
