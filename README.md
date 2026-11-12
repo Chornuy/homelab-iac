@@ -20,7 +20,7 @@ Main idea is to create in homelab, cloud like infrastructure, with a focus on Ku
 
 - `terraform/mikrotik`: RouterOS VLAN, DHCP, DNS, firewall, and BGP base config.
 - `terraform/ubuntu_k8s`: Proxmox VM creation + cloud-init + kubeadm bootstrap + Cilium BGP config.
-- `packer/ubuntu2404_k8s`: Proxmox template build for Ubuntu-based Kubernetes nodes.
+- `packer/k8s_ubuntu`: Proxmox template build for Ubuntu-based Kubernetes nodes.
 - `proxmox_vms`: Ansible playbooks/roles for Proxmox-side setup tasks.
 - `home_lab`: Ansible playbooks/roles for ODROID hosts, Docker, and monitoring.
 - `k8s_ymls`: Example Kubernetes Pod + LoadBalancer Service manifests.
@@ -45,7 +45,7 @@ Use templates and keep real secrets out of Git-tracked files.
 ```bash
 cp terraform/unbuntu_k8s/example.tfvars terraform/unbuntu_k8s/secrets.tfvars
 cp terraform/mikrotik/example.tfvars terraform/mikrotik/secrets.tfvars
-cp packer/ubuntu2404_k8s/example.pkrvars.hcl packer/ubuntu2404_k8s/secrets.pkrvars.hcl
+cp packer/k8s_ubuntu/example.pkrvars.hcl packer/k8s_ubuntu/secrets.pkrvars.hcl
 cp home_lab/vars/proxmox/vault.example.yml home_lab/vars/proxmox/vault.yml
 cp proxmox_vms/vars/proxmox/vault.example.yml proxmox_vms/vars/proxmox/vault.yml
 ```
@@ -59,7 +59,7 @@ bash scripts/init_proxmox_user.sh
 ### 3) Build Proxmox VM template with Packer
 
 ```bash
-cd packer/ubuntu2404_k8s
+cd packer/k8s_ubuntu
 packer init packer.pkr.hcl
 packer build -var-file=secrets.pkrvars.hcl packer.pkr.hcl
 ```
@@ -110,4 +110,4 @@ kubectl apply -f k8s_ymls/service.yml
 - Kubernetes bootstrap logic: `terraform/unbuntu_k8s/main.tf`
 - MikroTik provider config: `terraform/mikrotik/provider.tf`
 - ODROID inventory: `home_lab/inventory.ini`
-- Packer template: `packer/ubuntu2404_k8s/packer.pkr.hcl`
+- Packer template: `packer/k8s_ubuntu`

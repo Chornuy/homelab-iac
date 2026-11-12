@@ -2,6 +2,7 @@ locals {
   lab_vlan_id = 20
   # The physical port connected to your unmanaged switch
   trunk_port = "ether1"
+  trunk_port_2 = "ether3"
 }
 
 # 1. THE VLAN INTERFACE
@@ -89,7 +90,7 @@ resource "routeros_ip_dns_record" "node_dns" {
 resource "routeros_interface_bridge_vlan" "lab_vlan_assignment" {
   bridge   = "bridge"
   vlan_ids = [local.lab_vlan_id]
-  tagged   = ["bridge", local.trunk_port]
+  tagged   = ["bridge", local.trunk_port, local.trunk_port_2]
 }
 
 resource "routeros_ip_firewall_filter" "allow_home_to_lab" {
@@ -134,6 +135,7 @@ resource "routeros_routing_bgp_connection" "k8s_peers" {
 
   connect = false
   listen  = true
+  add_path_out   = null
 
   remote {
     address = "${each.value}/32"

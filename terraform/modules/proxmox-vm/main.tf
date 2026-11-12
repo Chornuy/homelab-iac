@@ -13,7 +13,7 @@ resource "proxmox_vm_qemu" "vm" {
   full_clone = var.full_clone
   agent      = 1
   memory     = var.memory
-  onboot     = var.onboot
+  start_at_node_boot     = var.onboot
   tags       = join(",", var.tags)
 
   os_type = "cloud-init"

@@ -22,7 +22,7 @@ variable "token_secret" {
 variable "proxmox_snippets_path" {
   description = "Datastore mount path on the Proxmox node where snippets are stored"
   type        = string
-  default     = "/mnt/pve/proxmox_nfs_ssd"
+  default     = "/mnt/pve/nas_nfs_hdd"
 }
 
 variable "nic_name" {
@@ -32,7 +32,7 @@ variable "nic_name" {
 
 variable "cloudinit_storage" {
   type    = string
-  default = "proxmox_nfs_ssd"
+  default = "nas_nfs_hdd"
 }
 
 variable "k8s_pod_cidr" {

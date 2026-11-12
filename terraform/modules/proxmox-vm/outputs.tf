@@ -12,5 +12,5 @@ output "default_ipv4_address" {
 }
 
 output "ssh_connection" {
-  value = "ssh ${proxmox_vm_qemu.vm.ciuser}@${proxmox_vm_qemu.vm.default_ipv4_address}"
+  value = "ssh ubuntu@${proxmox_vm_qemu.vm.default_ipv4_address}"
 }
