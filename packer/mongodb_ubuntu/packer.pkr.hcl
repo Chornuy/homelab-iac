@@ -24,37 +24,37 @@ variable "proxmox_api_token_secret" {
 }
 
 variable "proxmox_iso_pool" {
-  type = string
+  type    = string
   default = "local:iso"
 }
 
 variable "ubuntu_image" {
-  type = string
+  type    = string
   default = "ubuntu-22.04.1-live-server-amd64.iso"
 }
 
 variable "proxmox_storage_pool" {
-  type = string
+  type    = string
   default = "nvme-zfs"
 }
 
 variable "proxmox_storage_format" {
-  type = string
+  type    = string
   default = "raw"
 }
 
 variable "template_name" {
-  type = string
+  type    = string
   default = "mongo-7-db-template"
 }
 
 variable "template_description" {
-  type = string
+  type    = string
   default = "Ubuntu 22.04 with K8s, Cilium CLI, and Longhorn Deps"
 }
 
 variable "proxmox_vm_id" {
-  type = number
+  type    = number
   default = 900
 }
 
@@ -70,35 +70,35 @@ source "proxmox-iso" "mongodb-node" {
 
 
   # VM Hardware Configuration
-  vm_id                    = var.proxmox_vm_id
-  vm_name                  = "ubuntu-mongodb-ha-template"
+  vm_id   = var.proxmox_vm_id
+  vm_name = "ubuntu-mongodb-ha-template"
 
-  cores                    = 2
-  memory                   = 4096 # MongoDB loves RAM for its execution cache
-  os                       = "l26"
+  cores           = 2
+  memory          = 4096 # MongoDB loves RAM for its execution cache
+  os              = "l26"
   scsi_controller = "virtio-scsi-single"
-  
+
   network_adapters {
-    bridge = "vmbr0"
-    model  = "virtio"
+    bridge   = "vmbr0"
+    model    = "virtio"
     firewall = true
   }
 
   boot_iso {
     iso_file = "${var.proxmox_iso_pool}/${var.ubuntu_image}"
-    unmount = true
+    unmount  = true
   }
 
   # scsi_controller = "virtio-scsi-pci"
-  
+
   disks {
     disk_size    = "20G" # Increased for K8s and Longhorn requirements
     format       = var.proxmox_storage_format
     storage_pool = var.proxmox_storage_pool
-    type              = "scsi"
-    discard           = true            # Enables TRIM/Unmap for ZFS space reclamation
-    ssd               = true            # Optimized for NVMe/SSD latency
-    io_thread          = true            # Better performance for high IOPS NVMe
+    type         = "scsi"
+    discard      = true # Enables TRIM/Unmap for ZFS space reclamation
+    ssd          = true # Optimized for NVMe/SSD latency
+    io_thread    = true # Better performance for high IOPS NVMe
   }
 
 
@@ -117,7 +117,7 @@ source "proxmox-iso" "mongodb-node" {
     type = "std"
   }
 
-  boot_wait    = "10s"
+  boot_wait = "10s"
   boot_command = [
     "c",
     "linux /casper/vmlinuz -- autoinstall ds='nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/'",

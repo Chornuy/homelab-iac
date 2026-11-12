@@ -31,38 +31,63 @@ variable "proxmox_api_token_secret" {
 }
 
 variable "proxmox_iso_pool" {
-  type = string
+  type    = string
   default = "local:iso"
 }
 
 variable "ubuntu_image" {
-  type = string
+  type    = string
   default = "ubuntu-22.04.1-live-server-amd64.iso"
 }
 
 variable "proxmox_storage_pool" {
-  type = string
+  type    = string
   default = "nvme-zfs"
 }
 
 variable "proxmox_storage_format" {
-  type = string
+  type    = string
   default = "raw"
 }
 
 variable "template_name" {
-  type = string
+  type    = string
   default = "ubuntu-k8s-template"
 }
 
 variable "template_description" {
-  type = string
-  default = "Ubuntu 22.04 with K8s, Cilium CLI, and Longhorn Deps"
+  type    = string
+  default = "Ubuntu with K8s, Cilium CLI, and Longhorn Deps"
 }
 
 variable "proxmox_vm_id" {
-  type = number
+  type    = number
   default = 2500
+}
+
+variable "k8s_version" {
+  type    = string
+  default = "v1.32"
+}
+
+variable "crio_version" {
+  type    = string
+  default = "v1.34"
+}
+
+variable "longhorn_version" {
+  type    = string
+  default = "v1.7.2"
+}
+
+variable "cilium_cli_version" {
+  type    = string
+  default = "v0.19.2"
+}
+
+variable "longhorn_cli_version" {
+  type    = string
+  default = "v1.11.2"
 }
 
 # -----------------------------------------------------------------------------
@@ -79,7 +104,7 @@ source "proxmox-iso" "ubuntu" {
   template_description = var.template_description
   os                   = "l26"
 
-  boot_wait    = "10s"
+  boot_wait = "10s"
   boot_command = [
     "c",
     "linux /casper/vmlinuz -- autoinstall ds='nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/'",
@@ -104,10 +129,10 @@ source "proxmox-iso" "ubuntu" {
     disk_size    = "20G" # Increased for K8s and Longhorn requirements
     format       = var.proxmox_storage_format
     storage_pool = var.proxmox_storage_pool
-    type              = "scsi"
-    discard           = true            # Enables TRIM/Unmap for ZFS space reclamation
-    ssd               = true            # Optimized for NVMe/SSD latency
-    io_thread          = true            # Better performance for high IOPS NVMe
+    type         = "scsi"
+    discard      = true # Enables TRIM/Unmap for ZFS space reclamation
+    ssd          = true # Optimized for NVMe/SSD latency
+    io_thread    = true # Better performance for high IOPS NVMe
   }
 
   # Cloud-Init configuration
@@ -124,7 +149,7 @@ source "proxmox-iso" "ubuntu" {
   # unmount_iso    = true
   boot_iso {
     iso_file = "${var.proxmox_iso_pool}/${var.ubuntu_image}"
-    unmount = true
+    unmount  = true
   }
   http_directory = "http"
 
@@ -154,6 +179,14 @@ build {
 
   # 2. Cleanup and unique identity prep
   provisioner "shell" {
+      environment_vars = [
+      "K8S_VERSION=${var.k8s_version}",
+      "CRIO_VERSION=${var.crio_version}",
+      "LONGHORN_VERSION=${var.longhorn_version}",
+      "CILIUM_CLI_VERSION=${var.cilium_cli_version}",
+      "LHS_VERSION=${var.longhorn_cli_version}",
+    ]
+
     inline = [
       "sudo rm -f /etc/cloud/cloud.cfg.d/99-installer.cfg",
       "sudo truncate -s 0 /etc/machine-id",
